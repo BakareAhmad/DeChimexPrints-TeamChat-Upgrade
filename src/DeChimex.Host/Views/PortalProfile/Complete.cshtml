@@ -1,0 +1,70 @@
+@model DeChimex.Host.Models.Portal.ProfileCompletionViewModel
+@using DeChimex.Host
+@{
+    Layout = "_PortalLayout";
+    ViewData["Title"] = "Complete your profile";
+    ViewData["ActiveNav"] = "profile";
+}
+@*
+    Order-time profile completion (owner directive 2026-10-07). Gradual signup collects only
+    email + password, so this step asks for ONLY what the order workflow genuinely needs:
+    the name printed on the order/quote/invoice and the contact phone printed on the invoice
+    and used for fulfilment. The delivery address is collected on the checkout form itself.
+    It is framed as a profile UPDATE: values pre-filled, no email, no password.
+*@
+<div class="cs-wrap cs-wrap-md">
+    <partial name="Customer/_AccountTabs" model="@("profile")" />
+    <div class="cs-page-head"><h1>Complete your profile</h1></div>
+
+    <div class="ac-grid">
+        <section class="cs-card cs-card-pad" aria-labelledby="completeHeading">
+            <h2 id="completeHeading" class="cs-card-title">A few more details</h2>
+            <p class="cs-card-sub">
+                We need a few more details to process your order &mdash; your name for the order and
+                invoice, and a phone number we can reach you on for delivery. You will not be asked
+                for your email or password again.
+            </p>
+
+            <form asp-action="Complete" method="post" style="margin-top:10px" data-guard>
+                <input type="hidden" asp-for="ReturnUrl" />
+                <div asp-validation-summary="ModelOnly" class="alert alert-error mb-4" role="alert"></div>
+
+                <div class="au-grid-2">
+                    <div class="field">
+                        <label class="label" asp-for="FirstName">First name <span class="req">*</span></label>
+                        <input class="input" asp-for="FirstName" autocomplete="given-name" />
+                        <span asp-validation-for="FirstName" class="field-error"></span>
+                    </div>
+                    <div class="field">
+                        <label class="label" asp-for="LastName">Last name <span class="req">*</span></label>
+                        <input class="input" asp-for="LastName" autocomplete="family-name" />
+                        <span asp-validation-for="LastName" class="field-error"></span>
+                    </div>
+                </div>
+
+                <div class="field">
+                    <label class="label" asp-for="Phone">Phone number <span class="req">*</span></label>
+                    <input class="input" asp-for="Phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="+234..." />
+                    <span asp-validation-for="Phone" class="field-error"></span>
+                    <p class="cs-card-sub" style="margin:6px 0 0">Used for delivery contact and printed on your invoice.</p>
+                </div>
+
+                <button class="btn btn-primary btn-block" type="submit">
+                    @(string.IsNullOrWhiteSpace(Model.ReturnUrl) ? "Save profile" : "Save and continue")
+                </button>
+                <p class="cs-card-sub" style="margin:10px 0 0">
+                    Your delivery address is asked for at checkout &mdash; nothing else is needed here.
+                </p>
+            </form>
+        </section>
+
+        <section class="cs-card cs-card-pad" aria-labelledby="whyHeading">
+            <h2 id="whyHeading" class="cs-card-title">Why we ask</h2>
+            <ul class="au-perks" aria-label="Why these details are needed">
+                <li>@Html.Raw(CustomerIcons.Svg("check-circle", 16)) Your name appears on the order, quote and invoice</li>
+                <li>@Html.Raw(CustomerIcons.Svg("check-circle", 16)) Your phone lets the courier reach you for delivery</li>
+                <li>@Html.Raw(CustomerIcons.Svg("check-circle", 16)) You keep your cart &mdash; checkout picks up where you left off</li>
+            </ul>
+        </section>
+    </div>
+</div>

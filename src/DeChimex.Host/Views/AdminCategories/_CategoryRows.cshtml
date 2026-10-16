@@ -1,0 +1,31 @@
+@model IReadOnlyList<DeChimex.Contracts.Categories.CategoryDto>
+@{
+    var canManage = ViewBag.CanManage is true;
+}
+<div class="table-wrap">
+    <table class="table">
+        <thead><tr><th>Subcategory</th><th>Slug</th><th>Products</th><th>Order</th><th>Status</th><th></th></tr></thead>
+        <tbody>
+            @foreach (var c in Model)
+            {
+                <tr>
+                    <td class="font-semibold">@c.Name</td>
+                    <td class="text-muted">@c.Slug</td>
+                    <td>@c.ProductCount</td>
+                    <td>@c.DisplayOrder</td>
+                    <td>@if (c.IsActive) { <span class="badge badge-success">Active</span> } else { <span class="badge badge-neutral">Inactive</span> }</td>
+                    <td style="text-align:right">
+                        @if (canManage)
+                        {
+                            <a class="btn btn-ghost btn-sm" asp-controller="AdminCategories" asp-action="Options" asp-route-id="@c.Id">Ordering options</a>
+                            <a class="btn btn-ghost btn-sm" asp-controller="AdminCategories" asp-action="Edit" asp-route-id="@c.Id">Edit</a>
+                            <form asp-controller="AdminCategories" asp-action="Delete" asp-route-id="@c.Id" method="post" style="display:inline" onsubmit="return confirm('Delete this category? Products cannot be in this category.');">
+                                <button type="submit" class="btn btn-ghost btn-sm" style="color:var(--danger)">Delete</button>
+                            </form>
+                        }
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

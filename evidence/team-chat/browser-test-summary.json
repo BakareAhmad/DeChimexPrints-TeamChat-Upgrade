@@ -1,0 +1,91 @@
+{
+  "date": "2026-10-13T19:50:12.359Z",
+  "base": "http://127.0.0.1:5198",
+  "assertions": [
+    "Owner completed forced password change",
+    "Owner first-login password change completed",
+    "Owner created Manager account through staff administration UI",
+    "Owner created product category through admin UI",
+    "Owner created customizable product with a real image",
+    "Owner opened a private Team Chat with Manager",
+    "Manager joined the same SignalR Team Chat conversation",
+    "Team Chat text delivered live to the second staff session",
+    "HTTP response and SignalR event were deduplicated",
+    "Team Chat image uploaded, authorized and rendered on recipient session",
+    "Manager SignalR WebSockets were intercepted for reconnect verification",
+    "Team Chat indicates the disconnected/reconnecting state",
+    "Disconnected Manager missed the live push while offline",
+    "Reconnect synchronization recovered one persisted message without duplication",
+    "Team Chat voice note recorded and previewed",
+    "Team Chat recording preview loaded decodable audio metadata",
+    "Team Chat recording preview played through the browser audio element",
+    "Team Chat recipient voice note loaded decodable audio metadata",
+    "Team Chat recipient voice note played through the browser audio element",
+    "Team Chat recorded voice note is playable on recipient session",
+    "Team Chat reply delivered live in the reverse direction",
+    "Sender also has a single copy after push/reconciliation",
+    "Customer account registered and verified through the disabled-email local outbox",
+    "Customer is denied access to Team Chat",
+    "Customer cannot retrieve a Team Chat attachment",
+    "Customer completed the real order-time profile flow",
+    "Customer submitted a genuine custom order request",
+    "Customer and Owner opened their distinct sides of the same Custom Order workspace",
+    "Custom Order image and text crossed the order-scoped SignalR chat",
+    "Custom Order voice note recorded and previewed",
+    "Custom Order recording preview loaded decodable audio metadata",
+    "Custom Order recording preview played through the browser audio element",
+    "Custom Order staff voice note loaded decodable audio metadata",
+    "Custom Order staff voice note played through the browser audio element",
+    "Custom Order recorded voice note delivered and audio metadata loaded for staff",
+    "Custom Order participant can fetch its own private attachment",
+    "No unexpected browser console or page errors",
+    "No unexpected HTTP error responses"
+  ],
+  "counts": {
+    "assertions": 38,
+    "browserErrors": 0,
+    "httpErrors": 0,
+    "expectedReconnectLogs": 6
+  },
+  "browserErrors": [],
+  "httpErrors": [],
+  "expectedReconnectLogs": [
+    {
+      "page": "manager",
+      "kind": "console",
+      "message": "[2026-10-13T19:49:51.031Z] Error: Connection disconnected with error 'Error: WebSocket closed with status code: 4000 (E2E reconnect verification).'."
+    },
+    {
+      "page": "manager",
+      "kind": "console",
+      "message": "[2026-10-13T19:49:51.033Z] Error: Connection disconnected with error 'Error: WebSocket closed with status code: 4000 (E2E reconnect verification).'."
+    },
+    {
+      "page": "manager",
+      "kind": "console",
+      "message": "[2026-10-13T19:49:51.053Z] Error: Failed to complete negotiation with the server: TypeError: Failed to fetch"
+    },
+    {
+      "page": "manager",
+      "kind": "console",
+      "message": "[2026-10-13T19:49:51.053Z] Error: Failed to start the connection: Error: Failed to complete negotiation with the server: TypeError: Failed to fetch"
+    },
+    {
+      "page": "manager",
+      "kind": "console",
+      "message": "[2026-10-13T19:49:51.054Z] Error: Failed to complete negotiation with the server: TypeError: Failed to fetch"
+    },
+    {
+      "page": "manager",
+      "kind": "console",
+      "message": "[2026-10-13T19:49:51.054Z] Error: Failed to start the connection: Error: Failed to complete negotiation with the server: TypeError: Failed to fetch"
+    }
+  ],
+  "evidence": [
+    "custom-order-chat-customer-desktop.png",
+    "custom-order-chat-customer-mobile.png",
+    "custom-order-chat-staff-desktop.png",
+    "team-chat-desktop.png",
+    "team-chat-mobile.png"
+  ]
+}

@@ -1,0 +1,70 @@
+@model IReadOnlyList<DeChimex.Contracts.Reviews.TestimonialDto>
+@{
+    Layout = "_AdminLayout";
+    var canManage = ViewBag.CanManage is true;
+}
+<div class="toolbar" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;gap:12px;flex-wrap:wrap">
+    <p class="text-xs text-muted" style="margin:0">
+        Published reviews appear in the slider on the home page, in position order.
+    </p>
+    @if (canManage)
+    {
+        <a class="btn btn-primary" asp-action="Create">New review</a>
+    }
+</div>
+
+<div class="table-wrap">
+    <table class="table">
+        <thead><tr><th style="width:64px">Pos.</th><th>Customer</th><th>Review</th><th style="width:90px">Rating</th><th style="width:110px">Status</th><th></th></tr></thead>
+        <tbody>
+            @if (Model.Count == 0)
+            {
+                var es = new EmptyState(EmptyIcons.Star, "No reviews yet",
+                    "Reviews you publish slide through the home page \"What customers say\" section.",
+                    CtaHref: canManage ? "/admin/reviews/create" : null, CtaText: "New review");
+                <tr><td colspan="6" class="table-empty">
+                <partial name="_EmptyState" model="es" /></td></tr>
+            }
+            @foreach (var r in Model)
+            {
+                <tr>
+                    <td class="text-muted">@r.DisplayOrder</td>
+                    <td>
+                        <div class="flex items-center gap-2">
+                            @if (!string.IsNullOrWhiteSpace(r.AvatarUrl))
+                            {
+                                <img src="@r.AvatarUrl" alt="" width="32" height="32"
+                                     style="width:32px;height:32px;border-radius:50%;object-fit:cover;border:1px solid var(--border)" />
+                            }
+                            else
+                            {
+                                <span aria-hidden="true" style="width:32px;height:32px;border-radius:50%;background:var(--primary-100,#eef2ff);color:var(--primary-800,#3730a3);font-weight:800;font-size:12.5px;display:grid;place-items:center">@r.CustomerName.Substring(0, 1)</span>
+                            }
+                            <div>
+                                <div class="font-semibold">@r.CustomerName</div>
+                                @if (!string.IsNullOrWhiteSpace(r.CustomerTitle))
+                                {
+                                    <div class="text-xs text-muted">@r.CustomerTitle</div>
+                                }
+                            </div>
+                        </div>
+                    </td>
+                    <td style="max-width:420px">
+                        <span title="@r.Body">@(r.Body.Length > 110 ? r.Body[..110] + "…" : r.Body)</span>
+                    </td>
+                    <td>@("★".PadRight(r.Rating, '★').PadRight(5, '☆'))</td>
+                    <td>@if (r.IsPublished) { <span class="badge badge-success">Published</span> } else { <span class="badge badge-neutral">Hidden</span> }</td>
+                    <td style="text-align:right">
+                        @if (canManage)
+                        {
+                            <a class="btn btn-ghost btn-sm" asp-action="Edit" asp-route-id="@r.Id">Edit</a>
+                            <form asp-action="Delete" asp-route-id="@r.Id" method="post" style="display:inline" onsubmit="return confirm('Delete this review? It will disappear from the home page.');">
+                                <button type="submit" class="btn btn-ghost btn-sm" style="color:var(--danger)">Delete</button>
+                            </form>
+                        }
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

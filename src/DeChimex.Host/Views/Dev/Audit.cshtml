@@ -1,0 +1,88 @@
+@model List<DeChimex.Host.Controllers.Mvc.Dev.DevAuditController.RawAuditRow>
+@{
+    Layout = "~/Views/Dev/_DevLayout.cshtml";
+    var pageNum = (int)ViewBag.Page;
+    var totalPages = (int)ViewBag.TotalPages;
+    var total = (int)ViewBag.TotalRecords;
+    string? Q(string key, object? value) => value is null || (value is string s && string.IsNullOrWhiteSpace(s)) ? null : value.ToString();
+    string PageUrl(int p) => $"/dev/audit?entity={Q("e", ViewBag.Entity)}&entityId={Q("eid", ViewBag.EntityId)}&actor={Q("actor", ViewBag.Actor)}&action={Q("action", ViewBag.Action)}&from={Q("from", ViewBag.From)}&to={Q("to", ViewBag.To)}&page={p}";
+}
+<div class="dv-note" style="margin-bottom:12px">Every committed change with its before/after values (who changed what, from what, to what, when). This is the forensic, technical trail — the business-facing event feed lives in the admin portal under Business activity.</div>
+
+<form method="get" class="dv-filters" aria-label="Filter audit trail">
+    <label>Entity <input name="entity" value="@ViewBag.Entity" maxlength="80" placeholder="e.g. Order, Product, Invoice" /></label>
+    <label>Entity ID <input name="entityId" value="@ViewBag.EntityId" maxlength="64" class="dv-mono" /></label>
+    <label>Action contains <input name="action" value="@ViewBag.Action" maxlength="80" placeholder="e.g. create, update" /></label>
+    <label>Performed by <input name="actor" value="@ViewBag.Actor" maxlength="120" placeholder="email or system" /></label>
+    <label>From (UTC)<input type="date" name="from" value="@(((DateTime?)ViewBag.From)?.ToString("yyyy-MM-dd"))" /></label>
+    <label>Through (UTC)<input type="date" name="to" value="@(((DateTime?)ViewBag.To)?.ToString("yyyy-MM-dd"))" /></label>
+    <button class="dv-btn" type="submit">Apply filters</button>
+    <a class="dv-btn dv-btn-ghost" href="/dev/audit">Clear</a>
+</form>
+
+<p class="dv-small dv-muted" style="margin:0 0 8px">@total record@(total == 1 ? "" : "s") · page @pageNum of @(Math.Max(totalPages, 1))</p>
+
+<div class="dv-card">
+    @if (Model.Count == 0)
+    {
+        <p class="dv-small dv-muted">No audit rows match. Adjust the filters, or the filtered entity has no captured changes in range.</p>
+    }
+    else
+    {
+        <div class="dv-table-wrap"><table class="dv-table">
+            <thead>
+                <tr>
+                    <th>When (UTC)</th>
+                    <th>Action</th>
+                    <th>Entity</th>
+                    <th>By</th>
+                    <th>Changed</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var r in Model)
+                {
+                    <tr>
+                        <td class="dv-mono dv-small" style="white-space:nowrap">@r.TimestampUtc.ToString("yyyy-MM-dd HH:mm:ss")</td>
+                        <td class="dv-mono dv-small">@r.Action</td>
+                        <td class="dv-small">@r.EntityName@(r.EntityId == null ? "" : $" · {r.EntityId[..Math.Min(8, r.EntityId.Length)]}")</td>
+                        <td class="dv-small">@(string.IsNullOrWhiteSpace(r.PerformedBy) ? "system" : r.PerformedBy)</td>
+                        <td>
+                            <details>
+                                <summary style="cursor:pointer" class="dv-small">View diff</summary>
+                                <div style="font-size:12px">
+                                    @if (!string.IsNullOrWhiteSpace(r.OldValues))
+                                    {
+                                        <div><strong>Before:</strong><pre class="dv-mono dv-small" style="white-space:pre-wrap;margin:4px 0">@r.OldValues</pre></div>
+                                    }
+                                    @if (!string.IsNullOrWhiteSpace(r.NewValues))
+                                    {
+                                        <div><strong>After:</strong><pre class="dv-mono dv-small" style="white-space:pre-wrap;margin:4px 0">@r.NewValues</pre></div>
+                                    }
+                                    @if (string.IsNullOrWhiteSpace(r.OldValues) && string.IsNullOrWhiteSpace(r.NewValues))
+                                    {
+                                        <span class="dv-muted dv-small">No value snapshot recorded for this action.</span>
+                                    }
+                                </div>
+                            </details>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table></div>
+    }
+</div>
+
+@if (totalPages > 1)
+{
+    <div class="dv-pager">
+        @if (pageNum > 1)
+        {
+            <a class="dv-btn dv-btn-ghost" href="@PageUrl(pageNum - 1)">Previous</a>
+        }
+        @if (pageNum < totalPages)
+        {
+            <a class="dv-btn dv-btn-ghost" href="@PageUrl(pageNum + 1)">Next</a>
+        }
+    </div>
+}

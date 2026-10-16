@@ -1,0 +1,66 @@
+@model DeChimex.Host.Models.Admin.ReviewFormViewModel
+@* Shared create/edit fields for a Home page review. Only what the slider renders:
+   name, role line, the review text, an optional avatar, the star rating, publish
+   state and slider order. *@
+<div asp-validation-summary="ModelOnly" class="alert alert-error mb-4" role="alert"></div>
+
+<div class="field">
+    <label class="label" asp-for="CustomerName">Customer name <span class="req">*</span></label>
+    <input class="input" asp-for="CustomerName" placeholder="e.g. Olalekan F." />
+    <span asp-validation-for="CustomerName" class="field-error"></span>
+</div>
+
+<div class="field">
+    <label class="label" asp-for="CustomerTitle">Role / company</label>
+    <input class="input" asp-for="CustomerTitle" placeholder="e.g. Founder, EAYoruba" />
+    <span asp-validation-for="CustomerTitle" class="field-error"></span>
+    <p class="field-hint">Shown under the name. Optional.</p>
+</div>
+
+<div class="field">
+    <label class="label" asp-for="Body">Review <span class="req">*</span></label>
+    <textarea class="input" asp-for="Body" rows="5" placeholder="What did the customer say?"></textarea>
+    <span asp-validation-for="Body" class="field-error"></span>
+</div>
+
+<div class="field">
+    <label class="label" asp-for="Rating">Rating</label>
+    <select class="input" asp-for="Rating">
+        @for (var i = 5; i >= 1; i--)
+        {
+            <option value="@i" selected="@(Model.Rating == i)">@i star@(i == 1 ? "" : "s")</option>
+        }
+    </select>
+    <span asp-validation-for="Rating" class="field-error"></span>
+</div>
+
+<div class="field">
+    <label class="label" asp-for="AvatarUrl">Avatar / logo</label>
+    @if (!string.IsNullOrWhiteSpace(Model.AvatarUrl))
+    {
+        <div class="flex items-center gap-2 mb-2">
+            <img src="@Model.AvatarUrl" alt="" width="40" height="40"
+                 style="width:40px;height:40px;border-radius:50%;object-fit:cover;border:1px solid var(--border)" />
+            <span class="text-xs text-muted">Current image</span>
+        </div>
+    }
+    <input class="input" asp-for="AvatarUrl" placeholder="/img/reviews/logo.png or a full URL" />
+    <span asp-validation-for="AvatarUrl" class="field-error"></span>
+    <label class="label mt-2" asp-for="AvatarFile">…or upload an image</label>
+    <input class="input" asp-for="AvatarFile" type="file" accept=".jpg,.jpeg,.png,.webp,.gif" />
+    <span asp-validation-for="AvatarFile" class="field-error"></span>
+    <p class="field-hint">Optional. Without an image the slider shows the customer's initial. An upload replaces the URL above.</p>
+</div>
+
+<div class="field">
+    <label class="label" asp-for="DisplayOrder">Slider position</label>
+    <input class="input" asp-for="DisplayOrder" type="number" min="0" step="1" />
+    <span asp-validation-for="DisplayOrder" class="field-error"></span>
+    <p class="field-hint">Lower numbers slide first. Leave 0 to add this review at the end.</p>
+</div>
+
+<div class="field">
+    <label class="flex items-center gap-2 text-sm">
+        <input class="checkbox" asp-for="IsPublished" /> Published (shown on the home page)
+    </label>
+</div>

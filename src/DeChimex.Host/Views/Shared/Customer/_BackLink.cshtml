@@ -1,0 +1,7 @@
+@using DeChimex.Host
+@model (string Href, string Label, string? Style)
+@* Reusable contextual back navigator for the customer/portal area (nav audit
+   2026-10-09). Smart-back: returns through browser history when the user came
+   from inside the app (preserving shop filters, tabs, pagination), otherwise
+   falls back to the given parent href (direct entry / refresh / POST chains). *@
+<a class="cs-back" href="@Model.Href" data-smart-back style="@Model.Style">@Html.Raw(CustomerIcons.Svg("arrow-left", 16)) @Model.Label</a>

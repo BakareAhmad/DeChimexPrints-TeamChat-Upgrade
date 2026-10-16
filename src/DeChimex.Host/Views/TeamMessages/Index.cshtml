@@ -1,0 +1,116 @@
+@using DeChimex.Contracts.InternalMessages
+@{
+    var dev = ViewBag.DevPortal is true;
+    Layout = dev ? "~/Views/Dev/_DevLayout.cshtml" : "_AdminLayout";
+    var conversations = ViewBag.Conversations as IReadOnlyList<ConversationSummaryDto> ?? Array.Empty<ConversationSummaryDto>();
+    var contacts = ViewBag.Contacts as IReadOnlyList<TeamContactDto> ?? Array.Empty<TeamContactDto>();
+    var myUserId = ViewBag.MyUserId is Guid mid ? mid : Guid.Empty;
+    var base_ = dev ? "/dev/messages" : "/admin/team-messages";
+    string Fmt(DateTime? utc) => utc is null ? "" : utc.Value.ToLocalTime().ToString("dd MMM · HH:mm");
+    string Initials(string name)
+    {
+        var parts = name.Split(' ', StringSplitOptions.RemoveEmptyEntries).Take(2);
+        return string.Concat(parts.Select(p => char.ToUpperInvariant(p[0])));
+    }
+}
+<main class="team-inbox-page" data-team-inbox>
+    <header class="team-inbox-hero">
+        <div>
+            <span class="team-eyebrow">@(dev ? "Developer Portal" : "Staff workspace") <span aria-hidden="true">·</span> Private messaging</span>
+            <h1>Team chat</h1>
+            <p>One-to-one work conversations with people you are authorized to reach. Messages and files stay separate from customer order chats.</p>
+        </div>
+        <div class="team-inbox-count" aria-label="@conversations.Count conversations">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 11.5a8.4 8.4 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.4 8.4 0 0 1-3.8-.9L3 21l1.9-5.7a8.4 8.4 0 0 1-.9-3.8A8.5 8.5 0 0 1 8.7 3.9a8.4 8.4 0 0 1 3.8-.9h.5a8.5 8.5 0 0 1 8 8z" /></svg>
+            <span>@conversations.Count <small>@(conversations.Count == 1 ? "conversation" : "conversations")</small></span>
+        </div>
+    </header>
+
+    <div class="team-inbox-grid">
+        <section class="team-inbox-panel team-conversations-panel" aria-labelledby="teamConversationsHeading">
+            <header class="team-panel-heading">
+                <div>
+                    <h2 id="teamConversationsHeading">Recent conversations</h2>
+                    <p>Pick up where you left off.</p>
+                </div>
+                <label class="team-search-box">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7" /><path d="m20 20-4-4" /></svg>
+                    <span class="visually-hidden">Filter conversations</span>
+                    <input type="search" placeholder="Search people or messages" autocomplete="off" data-team-search />
+                </label>
+            </header>
+
+            @if (conversations.Count == 0)
+            {
+                <div class="team-inbox-empty" data-team-no-conversations>
+                    <span class="team-empty-icon" aria-hidden="true">
+                        <svg viewBox="0 0 24 24"><path d="M21 11.5a8.4 8.4 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.4 8.4 0 0 1-3.8-.9L3 21l1.9-5.7a8.4 8.4 0 0 1-.9-3.8A8.5 8.5 0 0 1 8.7 3.9a8.4 8.4 0 0 1 3.8-.9h.5a8.5 8.5 0 0 1 8 8z" /></svg>
+                    </span>
+                    <strong>No conversations yet</strong>
+                    <span>Choose an authorized colleague to start a private work chat.</span>
+                </div>
+            }
+            else
+            {
+                <nav class="team-conversation-list" aria-label="Your conversations" data-team-conversation-list>
+                    @foreach (var c in conversations)
+                    {
+                        var search = $"{c.OtherName} {c.OtherRoleLabel} {c.LastMessageBody}".ToLowerInvariant();
+                        <a class="team-conversation-row" href="@base_/@c.ConversationId"
+                           data-team-conversation-item data-search="@search">
+                            <span class="team-avatar" aria-hidden="true">@Initials(c.OtherName)</span>
+                            <span class="team-conversation-main">
+                                <span class="team-conversation-topline">
+                                    <strong>@c.OtherName</strong>
+                                    <small>@Fmt(c.LastSentUtc)</small>
+                                </span>
+                                <span class="team-conversation-role">@c.OtherRoleLabel</span>
+                                <span class="team-conversation-preview">
+                                    @(c.LastMessageBody is null ? "No messages yet" : (c.LastSenderId == myUserId ? "You: " : c.OtherName + ": ") + c.LastMessageBody)
+                                </span>
+                            </span>
+                            @if (c.UnreadCount > 0)
+                            {
+                                <span class="team-unread-count" aria-label="@c.UnreadCount unread messages">@(c.UnreadCount > 99 ? "99+" : c.UnreadCount.ToString())</span>
+                            }
+                        </a>
+                    }
+                </nav>
+                <p class="team-no-search-results" data-team-no-results hidden>No conversations match that search.</p>
+            }
+        </section>
+
+        <aside class="team-inbox-panel team-start-panel" aria-labelledby="teamStartHeading">
+            <span class="team-start-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" /></svg>
+            </span>
+            <h2 id="teamStartHeading">Start a conversation</h2>
+            <p>Choose someone you are permitted to message. Access is rechecked when you open, send, or download media.</p>
+            @if (contacts.Count > 0)
+            {
+                <form method="post" action="@base_/start" class="team-start-form">
+                    @Html.AntiForgeryToken()
+                    <label for="teamContact">Colleague</label>
+                    <select id="teamContact" name="otherUserId" required>
+                        @foreach (var contact in contacts)
+                        {
+                            <option value="@contact.UserId">@contact.Name — @contact.RoleLabel</option>
+                        }
+                    </select>
+                    <button type="submit" class="team-start-button">
+                        <span>Open conversation</span>
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14m-7-7 7 7-7 7" /></svg>
+                    </button>
+                </form>
+            }
+            else
+            {
+                <div class="team-no-contacts">There is currently no one you can start a conversation with.</div>
+            }
+            <div class="team-privacy-note">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="10" width="18" height="11" rx="2" /><path d="M7 10V7a5 5 0 0 1 10 0v3" /></svg>
+                <span>Private internal messages. Customer order chats remain separate.</span>
+            </div>
+        </aside>
+    </div>
+</main>

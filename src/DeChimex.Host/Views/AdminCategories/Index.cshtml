@@ -1,0 +1,90 @@
+@model IReadOnlyList<DeChimex.Contracts.Categories.CategoryDto>
+@{
+    Layout = "_AdminLayout";
+    var canManage = ViewBag.CanManage is true;
+    var majors = (IReadOnlyList<DeChimex.Contracts.Categories.MajorCategoryDto>)ViewBag.MajorCategories;
+    var search = (string?)ViewBag.Search;
+    var hasFilter = !string.IsNullOrWhiteSpace(search) || ViewBag.MajorCategoryId is not null || ViewBag.Unassigned is true;
+    var unassigned = Model.Where(c => c.MajorCategoryId == null).OrderBy(c => c.DisplayOrder).ToList();
+}
+@* Single two-level catalogue tree: top-level categories with their subcategories.
+   The two storage entities (major category / category) are managed from this one page. *@
+<div class="toolbar" style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px">
+    <form method="get" class="flex items-center gap-2">
+        <input class="input" type="search" name="search" value="@search" placeholder="Search categories..." style="width:280px;min-width:220px">
+        <button class="btn btn-secondary" type="submit">Search</button>
+        @if (hasFilter)
+        {
+            <a class="btn btn-ghost" asp-action="Index">Clear</a>
+        }
+    </form>
+    @if (canManage)
+    {
+        <div class="flex items-center gap-2">
+            <a class="btn btn-secondary" href="/admin/major-categories/create">New top-level category</a>
+            <a class="btn btn-primary" asp-action="Create">New subcategory</a>
+        </div>
+    }
+</div>
+
+@if (unassigned.Count > 0)
+{
+    <div class="card mb-4">
+        <div class="card-head">
+            <h3>Not yet placed in a top-level category</h3>
+        </div>
+        <div class="card-body" style="padding-top:6px">
+            <partial name="_CategoryRows" model="unassigned" view-data="ViewData" />
+        </div>
+    </div>
+}
+
+@foreach (var m in majors)
+{
+    var subs = Model.Where(c => c.MajorCategoryId == m.Id).OrderBy(c => c.DisplayOrder).ToList();
+    <div class="card mb-4">
+        <div class="card-head" style="align-items:center">
+            <h3 style="margin:0">@m.Name</h3>
+            <div class="flex items-center gap-2">
+                <span class="badge badge-neutral">@subs.Count subcategory@(subs.Count == 1 ? "" : "ies")</span>
+                @if (canManage)
+                {
+                    <a class="btn btn-ghost btn-sm" href="/admin/categories/create?majorCategoryId=@m.Id">Add subcategory</a>
+                    <a class="btn btn-ghost btn-sm" href="/admin/major-categories/edit/@m.Id">Edit</a>
+                    <form method="post" action="/admin/major-categories/delete/@m.Id" style="display:inline" onsubmit="return confirm('Delete this top-level category? It must have no subcategories.');">
+                        @Html.AntiForgeryToken()
+                        <button type="submit" class="btn btn-ghost btn-sm" style="color:var(--danger)">Delete</button>
+                    </form>
+                }
+            </div>
+        </div>
+        @if (!string.IsNullOrWhiteSpace(m.Description))
+        {
+            <div class="text-sm text-muted" style="padding:10px 16px 0">@m.Description</div>
+        }
+        <div class="card-body" style="padding-top:6px">
+            @if (subs.Count == 0)
+            {
+                <p class="text-muted" style="margin:4px 0">No subcategories yet.</p>
+            }
+            else
+            {
+                <partial name="_CategoryRows" model="subs" view-data="ViewData" />
+            }
+        </div>
+    </div>
+}
+
+@if (majors.Count == 0 && Model.Count == 0)
+{
+    <div class="card card-body">
+        @if (!string.IsNullOrWhiteSpace(search))
+        {
+            <p class="text-muted">No categories match "@search".<a asp-action="Index" style="margin-left:8px">Clear search</a></p>
+        }
+        else
+        {
+            <p class="text-muted">No categories found.</p>
+        }
+    </div>
+}

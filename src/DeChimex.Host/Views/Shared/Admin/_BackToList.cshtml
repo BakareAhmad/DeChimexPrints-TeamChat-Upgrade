@@ -1,0 +1,9 @@
+@model (string Href, string Label)
+@* Reusable contextual back navigator for the admin portal (nav audit
+   2026-10-09). Smart-back: returns through browser history when the user came
+   from inside the app (preserving list filters, search and pagination),
+   otherwise falls back to the given parent list href. *@
+<a class="btn btn-outline btn-sm" href="@Model.Href" data-smart-back aria-label="Back to @Model.Label">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>
+    Back to @Model.Label
+</a>

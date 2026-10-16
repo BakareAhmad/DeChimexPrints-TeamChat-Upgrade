@@ -1,0 +1,35 @@
+@model DeChimex.Host.Models.Admin.AnnouncementFormViewModel
+@* Shared create/edit fields for a customer-facing announcement. Only what the ticker
+   needs: the short message, an optional show window and the active switch. *@
+<div asp-validation-summary="ModelOnly" class="alert alert-error mb-4" role="alert"></div>
+
+<div class="field">
+    <label class="label" asp-for="Message">Message <span class="req">*</span></label>
+    <input class="input" asp-for="Message" maxlength="200" placeholder="e.g. We are closed on Fri 3 Oct for a staff event — orders placed after 4pm ship Monday." />
+    <span asp-validation-for="Message" class="field-error"></span>
+    <p class="field-hint">Short service-wide update shown in the scrolling pill on every customer page. Max 200 characters.</p>
+</div>
+
+<div class="flex gap-2" style="flex-wrap:wrap">
+    <div class="field" style="flex:1;min-width:200px">
+        <label class="label" asp-for="StartAt">Visible from (optional)</label>
+        <input class="input" asp-for="StartAt" type="datetime-local" />
+        <span asp-validation-for="StartAt" class="field-error"></span>
+        <p class="field-hint">Empty = visible as soon as it is active.</p>
+    </div>
+    <div class="field" style="flex:1;min-width:200px">
+        <label class="label" asp-for="EndAt">Visible until (optional)</label>
+        <input class="input" asp-for="EndAt" type="datetime-local" />
+        <span asp-validation-for="EndAt" class="field-error"></span>
+        <p class="field-hint">Empty = stays visible until deactivated.</p>
+    </div>
+</div>
+
+<div class="field">
+    <label class="label" style="display:flex;align-items:center;gap:8px;cursor:pointer">
+        <input type="checkbox" asp-for="IsActive" style="width:16px;height:16px" />
+        Active (show to customers)
+    </label>
+    <span asp-validation-for="IsActive" class="field-error"></span>
+    <p class="field-hint">Only active announcements inside their show window are shown.</p>
+</div>

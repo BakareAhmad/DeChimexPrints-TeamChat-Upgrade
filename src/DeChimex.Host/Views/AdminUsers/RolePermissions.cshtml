@@ -1,0 +1,115 @@
+@model IReadOnlyList<DeChimex.Contracts.Auth.PermissionDto>
+@{
+    Layout = "_AdminLayout";
+    var role = ViewBag.Role as DeChimex.Contracts.Auth.RoleDto;
+    var granted = new HashSet<string>(role?.Permissions ?? new List<string>());
+    string GroupOf(string name) => name.Split('.')[0];
+    var groups = Model.Select(p => GroupOf(p.Name)).Distinct().OrderBy(g => g).ToList();
+    var selectedCount = Model.Count(p => granted.Contains(p.Name));
+    var allSelected = Model.Count > 0 && selectedCount == Model.Count;
+    var allAriaChecked = selectedCount == 0 ? "false" : allSelected ? "true" : "mixed";
+
+    // Business-facing vocabulary (2026-10-08 portal cleanup): the underlying claims are
+    // unchanged, but staff owners see capabilities in plain language, not claim strings.
+    var groupLabels = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+    {
+        ["orders"] = "Orders", ["products"] = "Products", ["categories"] = "Categories",
+        ["services"] = "Services", ["customers"] = "Customers", ["inventory"] = "Inventory",
+        ["procurement"] = "Procurement & suppliers", ["invoices"] = "Invoices",
+        ["messages"] = "Customer enquiries", ["marketing"] = "Marketing",
+        ["reviews"] = "Reviews", ["announcements"] = "Announcements", ["gallery"] = "Gallery",
+        ["users"] = "Staff & roles", ["reports"] = "Reports", ["settings"] = "Business settings",
+        ["activity"] = "Business activity", ["notifications"] = "Notifications",
+    };
+    var permissionLabels = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+    {
+        ["orders.view"] = "View orders", ["orders.viewall"] = "View every staff member's orders",
+        ["orders.create"] = "Create orders", ["orders.updatestatus"] = "Update order status",
+        ["orders.cancel"] = "Cancel orders", ["orders.refund"] = "Refund orders",
+        ["products.view"] = "View products", ["products.create"] = "Create products",
+        ["products.update"] = "Edit products", ["products.delete"] = "Delete products",
+        ["categories.view"] = "View categories", ["categories.manage"] = "Manage categories",
+        ["services.view"] = "View services", ["services.manage"] = "Manage services",
+        ["customers.view"] = "View customers", ["customers.manage"] = "Manage customers",
+        ["inventory.view"] = "View inventory", ["inventory.adjust"] = "Adjust stock levels",
+        ["inventory.stockin"] = "Record stock in", ["inventory.stockout"] = "Record stock out",
+        ["procurement.view"] = "View purchase orders & suppliers", ["procurement.approve"] = "Approve purchase orders",
+        ["procurement.receive"] = "Receive deliveries",
+        ["messages.view"] = "Read and reply to customer enquiries",
+        ["marketing.view"] = "View marketing campaigns", ["marketing.manage"] = "Create and send campaigns",
+        ["reviews.view"] = "View customer reviews", ["reviews.manage"] = "Moderate customer reviews",
+        ["announcements.view"] = "View announcements", ["announcements.manage"] = "Publish announcements",
+        ["gallery.view"] = "View the gallery", ["gallery.manage"] = "Manage the gallery",
+        ["users.view"] = "View staff accounts", ["users.create"] = "Create staff accounts",
+        ["users.update"] = "Edit staff accounts", ["users.disable"] = "Disable staff accounts",
+        ["users.assignroles"] = "Assign roles and permissions",
+        ["reports.view"] = "View reports", ["reports.export"] = "Export reports",
+        ["settings.view"] = "View business settings", ["settings.manage"] = "Change business settings",
+        ["activity.view"] = "View the business activity feed",
+    };
+    string GroupLabel(string g) => groupLabels.TryGetValue(g, out var v) ? v : char.ToUpperInvariant(g[0]) + g[1..];
+    string PermLabel(string name) => permissionLabels.TryGetValue(name, out var v) ? v
+        : string.Join(' ', name.Split('.').Select(part => char.ToUpperInvariant(part[0]) + part[1..]));
+}
+<div class="card" style="max-width:900px">
+    <div class="card-head"><h3>Permissions: @(role?.Name)</h3></div>
+    <div class="card-body">
+        <p class="text-sm text-muted mb-4">Changes apply immediately to all users with this role.</p>
+        <form asp-action="RolePermissions" asp-route-id="@(role?.Id)" method="post" data-role-permission-editor data-guard>
+            <div class="mb-4" style="border:1px solid var(--n-200);border-radius:10px;padding:14px;background:var(--n-50)">
+                <label class="flex items-center gap-3 text-sm" style="cursor:pointer">
+                    <input type="checkbox" data-permissions-select-all
+                           aria-label="Select or clear all business permissions"
+                           aria-checked="@allAriaChecked" @(allSelected ? "checked" : "") />
+                    <span>
+                        <strong style="display:block">All business permissions</strong>
+                        <span class="text-muted">Select or clear everything in this checklist. Developer Portal access stays separate.</span>
+                    </span>
+                </label>
+            </div>
+            @for (var gi = 0; gi < groups.Count; gi++)
+            {
+                var group = groups[gi];
+                var inGroup = Model.Where(p => GroupOf(p.Name) == group).ToList();
+                var groupSelectedCount = inGroup.Count(p => granted.Contains(p.Name));
+                var groupAllSelected = inGroup.Count > 0 && groupSelectedCount == inGroup.Count;
+                var groupAriaChecked = groupSelectedCount == 0 ? "false" : groupAllSelected ? "true" : "mixed";
+                var groupLabel = GroupLabel(group);
+                <fieldset class="mb-4" id="permgrp@gi" data-permission-section="@group"
+                          style="border:1px solid var(--n-200);border-radius:10px;padding:12px">
+                    <legend style="width:100%;padding:0 2px">
+                        <span class="flex items-center justify-between gap-3" style="width:100%">
+                            <strong class="text-sm">@groupLabel</strong>
+                            <label class="flex items-center gap-2 text-sm text-muted" style="cursor:pointer">
+                                <input type="checkbox" data-permission-group-all="@group"
+                                       aria-label="Select or clear all @groupLabel permissions"
+                                       aria-checked="@groupAriaChecked" @(groupAllSelected ? "checked" : "") />
+                                <span>Select all in @groupLabel</span>
+                            </label>
+                        </span>
+                    </legend>
+                    <div role="group" aria-label="@groupLabel permissions"
+                         style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:8px 14px;margin-top:8px">
+                        @foreach (var p in inGroup)
+                        {
+                            <label class="flex items-center gap-2 text-sm" style="cursor:pointer">
+                                <input type="checkbox" name="PermissionIds" value="@p.Id"
+                                       data-permission="@p.Name" data-permission-group="@group"
+                                       @(granted.Contains(p.Name) ? "checked" : "") />
+                                @PermLabel(p.Name)
+                            </label>
+                        }
+                    </div>
+                </fieldset>
+            }
+            <div class="flex items-center gap-2">
+                <button class="btn btn-primary" type="submit">Save permissions</button>
+                <a class="btn btn-outline" asp-action="Roles">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/role-permissions.js" asp-append-version="true"></script>
+}

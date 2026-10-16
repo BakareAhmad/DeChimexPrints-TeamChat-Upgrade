@@ -1,0 +1,9 @@
+@* Procurement section tabs: purchase orders + the vendor list (suppliers were folded in
+   here by the 2026-10-08 portal cleanup so restocking reads as one workflow). *@
+@{
+    var active = (string)(ViewData["ProcurementTab"] ?? "orders");
+}
+<div class="toolbar" style="display:flex;gap:8px;margin-bottom:14px">
+    <a class="btn btn-sm @(active == "orders" ? "btn-primary" : "btn-outline")" href="/admin/procurement">Purchase orders</a>
+    <a class="btn btn-sm @(active == "suppliers" ? "btn-primary" : "btn-outline")" href="/admin/procurement?view=suppliers">Suppliers</a>
+</div>

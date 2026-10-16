@@ -1,0 +1,71 @@
+@model IReadOnlyList<DeChimex.Contracts.Announcements.AnnouncementDto>
+@{
+    Layout = "_AdminLayout";
+    var canManage = ViewBag.CanManage is true;
+    var nowUtc = (DateTime)(ViewBag.NowUtc ?? DateTime.UtcNow);
+    string Fmt(DateTime? d) => d is null ? "—" : d.Value.ToLocalTime().ToString("dd MMM yyyy, HH:mm");
+    bool Visible(DeChimex.Contracts.Announcements.AnnouncementDto a) =>
+        a.IsActive && (a.StartAtUtc is null || a.StartAtUtc <= nowUtc) && (a.EndAtUtc is null || a.EndAtUtc >= nowUtc);
+}
+<div class="toolbar" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;gap:12px;flex-wrap:wrap">
+    <p class="text-xs text-muted" style="margin:0">
+        Active announcements inside their scheduled show window scroll as a compact pill across the customer app.
+    </p>
+    @if (canManage)
+    {
+        <a class="btn btn-primary" asp-action="Create">New announcement</a>
+    }
+</div>
+
+<div class="table-wrap">
+    <table class="table">
+        <thead><tr><th>Message</th><th style="width:220px">Show from / until</th><th style="width:130px">Status</th><th></th></tr></thead>
+        <tbody>
+            @if (Model.Count == 0)
+            {
+                var es = new EmptyState(EmptyIcons.Megaphone, "No announcements yet",
+                    "Announcements you activate scroll across the customer app as a subtle service pill.",
+                    CtaHref: canManage ? "/admin/announcements/create" : null, CtaText: "New announcement");
+                <tr><td colspan="4" class="table-empty">
+                <partial name="_EmptyState" model="es" /></td></tr>
+            }
+            @foreach (var a in Model)
+            {
+                <tr>
+                    <td style="max-width:420px">
+                        <span title="@a.Message">@(a.Message.Length > 110 ? a.Message[..110] + "…" : a.Message)</span>
+                    </td>
+                    <td class="text-xs text-muted">@Fmt(a.StartAtUtc) → @Fmt(a.EndAtUtc)</td>
+                    <td>
+                        @if (!a.IsActive)
+                        {
+                            <span class="badge badge-neutral">Inactive</span>
+                        }
+                        else if (Visible(a))
+                        {
+                            <span class="badge badge-success">Live</span>
+                        }
+                        else
+                        {
+                            <span class="badge badge-neutral">Scheduled</span>
+                        }
+                    </td>
+                    <td style="text-align:right">
+                        @if (canManage)
+                        {
+                            <a class="btn btn-ghost btn-sm" asp-action="Edit" asp-route-id="@a.Id">Edit</a>
+                            <form method="post" style="display:inline"
+                                  asp-action="Toggle" asp-route-id="@a.Id" asp-route-active="@(!a.IsActive)">
+                                <button class="btn btn-ghost btn-sm" type="submit">@(a.IsActive ? "Deactivate" : "Activate")</button>
+                            </form>
+                            <form method="post" style="display:inline" asp-action="Delete" asp-route-id="@a.Id"
+                                  onsubmit="return confirm('Delete this announcement?');">
+                                <button class="btn btn-ghost btn-sm" type="submit" style="color:var(--danger,#dc2626)">Delete</button>
+                            </form>
+                        }
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
